@@ -94,27 +94,22 @@ public class Demo
 		
 		while(currentDate.isBefore(endDate) || currentDate.isEqual(endDate))
 		{
-			if(limitEnabled)
+			if(currentDate != startDate)
 			{
-				if(counter < limit)
+				if(limitEnabled)
+				{
+					if(counter < limit)
+					{
+						System.out.println(currentDate);
+						counter++;
+					}
+				}
+				else
 				{
 					System.out.println(currentDate);
-					counter++;
 				}
 			}
-			else
-			{
-				System.out.println(currentDate);
-			}
-			
-//			if(interval > 1)
-//			{
-//				currentDate = currentDate.plusMonths(interval - 1).plusDays(1);
-//			}
-//			else
-//			{
-//				currentDate = currentDate.plusDays(1);	
-//			}		
+	
 			try
 			{
 				currentDate = currentDate.plusMonths(interval).withDayOfMonth(dayOfMonth);
