@@ -2,6 +2,8 @@ package org.sw.marketing.servlet;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -10,17 +12,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sw.marketing.dao.calendar.CalendarDAO;
 import org.sw.marketing.dao.calendar.DAOFactory;
+import org.sw.marketing.dao.calendar.category.CalendarCategoryDAO;
 import org.sw.marketing.dao.calendar.event.CalendarEventDAO;
 import org.sw.marketing.data.calendar.Data;
 import org.sw.marketing.data.calendar.Data.Calendar;
 import org.sw.marketing.data.calendar.Data.Calendar.Event;
-import org.sw.marketing.data.form.Data.Form;
+import org.sw.marketing.data.calendar.Data.Calendar.Category;
+import org.sw.marketing.data.calendar.Data.Calendar.CurrentView;
 import org.sw.marketing.transformation.TransformerHelper;
 import org.sw.marketing.util.ReadFile;
 import org.sw.marketing.util.SkinReader;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 @WebServlet("/list/*")
 public class CalendarListServlet extends HttpServlet
@@ -44,6 +45,7 @@ public class CalendarListServlet extends HttpServlet
 		
 		CalendarDAO calendarDAO = DAOFactory.getCalendarDAO();
 		CalendarEventDAO eventDAO = DAOFactory.getCalendarEventDAO();
+		CalendarCategoryDAO categoryDAO = DAOFactory.getCalendarCategoryDAO();
 		
 		Data data = new Data();
 		Calendar calendar = null;
@@ -65,6 +67,21 @@ public class CalendarListServlet extends HttpServlet
 			{
 				calendar.getEvent().addAll(events);
 			}
+			
+			LocalDate localDate = LocalDate.now().withDayOfMonth(1);
+			int firstDay = localDate.getDayOfWeek().getValue() + 1;
+			int totalDays = localDate.getMonth().maxLength();
+			CurrentView currentView = new CurrentView();
+			currentView.setStartDay(firstDay);
+			currentView.setTotalDays(totalDays);
+			calendar.setCurrentView(currentView);
+			
+			java.util.List<Category> categories = categoryDAO.getCategories(calendar.getId());
+			if(categories !=  null)
+			{
+				calendar.getCategory().addAll(categories);
+			}
+			
 			data.getCalendar().add(calendar);
 		}
 		else
@@ -77,6 +94,7 @@ public class CalendarListServlet extends HttpServlet
 		 * generate output
 		 */
 		TransformerHelper transformerHelper = new TransformerHelper();
+		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslUrl"));
 		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.calendar", data);
 		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "list.xsl";
 		String xslStr = ReadFile.getSkin(xslScreen);

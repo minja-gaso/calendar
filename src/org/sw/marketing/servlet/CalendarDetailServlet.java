@@ -84,6 +84,18 @@ public class CalendarDetailServlet extends HttpServlet
 				calendar.getEvent().add(event);
 			}
 			
+			java.util.List<Event> recurringEvents = eventDAO.getCalendarRecurringEvents(event.getId());
+			if(recurringEvents != null)
+			{
+				calendar.getEvent().addAll(recurringEvents);
+			}
+			
+			Event parentEvent = eventDAO.getCalendarEvent(event.getParentId());
+			if(parentEvent != null)
+			{
+				calendar.getEvent().add(parentEvent);
+			}
+			
 			java.util.List<Category> categories = categoryDAO.getCategories(calendar.getId());
 			if(categories !=  null)
 			{
