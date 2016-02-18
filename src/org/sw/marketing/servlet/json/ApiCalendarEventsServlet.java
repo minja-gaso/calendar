@@ -1,6 +1,5 @@
-package org.sw.marketing.servlet;
+package org.sw.marketing.servlet.json;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 
@@ -19,28 +18,27 @@ import org.sw.marketing.data.calendar.Data.Calendar;
 import org.sw.marketing.data.calendar.Data.Calendar.Event;
 import org.sw.marketing.data.calendar.Data.Calendar.Category;
 import org.sw.marketing.data.calendar.Data.Calendar.CurrentView;
-import org.sw.marketing.transformation.TransformerHelper;
-import org.sw.marketing.util.ReadFile;
-import org.sw.marketing.util.SkinReader;
 
-@WebServlet("/list/*")
-public class CalendarListServlet extends HttpServlet
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+@WebServlet("/api/events/all.json")
+public class ApiCalendarEventsServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 
 	protected void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
-	{ 
-		boolean prettyUrl = false;
+	{
+		String paramCalendarID = request.getParameter("calendarID");
+		System.out.println(paramCalendarID);
 		long calendarID = 0;
-		String prettyUrlStr = null;
 		try
 		{
-			calendarID = Long.parseLong(request.getPathInfo().substring(1));
+			calendarID = Long.parseLong(paramCalendarID);
 		}
 		catch(NumberFormatException e)
 		{
-			prettyUrl = true;
-			prettyUrlStr = request.getPathInfo().substring(1);
+			e.printStackTrace();
 		}
 		
 		CalendarDAO calendarDAO = DAOFactory.getCalendarDAO();
@@ -48,16 +46,7 @@ public class CalendarListServlet extends HttpServlet
 		CalendarCategoryDAO categoryDAO = DAOFactory.getCalendarCategoryDAO();
 		
 		Data data = new Data();
-		Calendar calendar = null;
-		
-		if (prettyUrl)
-		{
-			calendar = calendarDAO.getCalendarByPrettyUrl(prettyUrlStr);
-		}
-		else
-		{
-			calendar = calendarDAO.getCalendar(calendarID);
-		}
+		Calendar calendar = calendarDAO.getCalendar(calendarID);
 		
 		if(calendar != null)
 		{
@@ -82,47 +71,17 @@ public class CalendarListServlet extends HttpServlet
 			}
 			
 			data.getCalendar().add(calendar);
+			
+			response.setContentType("application/json");
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			String json = gson.toJson(data);
+			response.getWriter().println(json);
 		}
 		else
 		{
 			response.getWriter().println("The calendar you are looking for could not be found.");
 			return;
 		}
-
-		/*
-		 * generate output
-		 */
-		TransformerHelper transformerHelper = new TransformerHelper();
-		transformerHelper.setUrlResolverBaseUrl(getServletContext().getInitParameter("assetXslUrl"));
-		String xmlStr = transformerHelper.getXmlStr("org.sw.marketing.data.calendar", data);
-		String xslScreen = getServletContext().getInitParameter("assetXslPath") + "list.xsl";
-		String xslStr = ReadFile.getSkin(xslScreen);
-		String htmlStr = transformerHelper.getHtmlStr(xmlStr, new ByteArrayInputStream(xslStr.getBytes()));
-		
-		String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
-		String skinHtmlStr = null;
-
-		String skinUrl = calendar.getSkinUrl();
-		String skinCssSelector = calendar.getSkinSelector();
-
-		if (skinUrl.length() > 0 && skinCssSelector.length() > 0)
-		{
-			skinHtmlStr = SkinReader.getSkinByUrl(calendar.getSkinUrl(), calendar.getSkinSelector());
-		}
-		else
-		{
-			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
-		}
-
-		skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
-		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
-		
-		System.out.println(xmlStr);
-		response.getWriter().println(skinHtmlStr);
-		
-//		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-//		String json = gson.toJson(data);
-//		System.out.println(json);
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
