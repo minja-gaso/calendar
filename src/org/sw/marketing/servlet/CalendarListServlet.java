@@ -70,9 +70,11 @@ public class CalendarListServlet extends HttpServlet
 			LocalDate localDate = LocalDate.now().withDayOfMonth(1);
 			int firstDay = localDate.getDayOfWeek().getValue() + 1;
 			int totalDays = localDate.getMonth().maxLength();
+			int month = localDate.getMonthValue();
 			CurrentView currentView = new CurrentView();
 			currentView.setStartDay(firstDay);
 			currentView.setTotalDays(totalDays);
+			currentView.setMonth(month);
 			calendar.setCurrentView(currentView);
 			
 			java.util.List<Category> categories = categoryDAO.getCategories(calendar.getId());
@@ -119,6 +121,7 @@ public class CalendarListServlet extends HttpServlet
 		
 		System.out.println(xmlStr);
 		response.getWriter().println(skinHtmlStr);
+//		response.getWriter().println(htmlStr);
 		
 //		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 //		String json = gson.toJson(data);
