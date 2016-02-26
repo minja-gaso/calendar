@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Tag;
 import org.sw.marketing.dao.calendar.CalendarDAO;
 import org.sw.marketing.dao.calendar.DAOFactory;
 import org.sw.marketing.dao.calendar.category.CalendarCategoryDAO;
@@ -17,6 +19,7 @@ import org.sw.marketing.dao.calendar.event.CalendarEventDAO;
 import org.sw.marketing.data.calendar.Data;
 import org.sw.marketing.data.calendar.Data.Calendar;
 import org.sw.marketing.data.calendar.Data.Calendar.Event;
+import org.sw.marketing.data.calendar.Data.Environment;
 import org.sw.marketing.data.calendar.Data.Calendar.Category;
 import org.sw.marketing.data.calendar.Data.Calendar.CurrentView;
 import org.sw.marketing.transformation.TransformerHelper;
@@ -90,6 +93,10 @@ public class CalendarListServlet extends HttpServlet
 			response.getWriter().println("The calendar you are looking for could not be found.");
 			return;
 		}
+		
+		Environment environment = new Environment();
+		environment.setScreenName("LIST");		
+		data.setEnvironment(environment);
 
 		/*
 		 * generate output
@@ -119,7 +126,15 @@ public class CalendarListServlet extends HttpServlet
 		skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 		
+		Element styleElement = new Element(Tag.valueOf("style"), "");
+		String skinCss = calendar.getSkinCssOverrides();
+		styleElement.text(skinCss);
+		String styleElementStr = styleElement.toString();
+		styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+		skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+		
 		System.out.println(xmlStr);
+		response.setCharacterEncoding("utf-8");
 		response.getWriter().println(skinHtmlStr);
 //		response.getWriter().println(htmlStr);
 		

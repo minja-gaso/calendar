@@ -8,14 +8,18 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jsoup.nodes.Element;
 import org.sw.marketing.dao.calendar.CalendarDAO;
 import org.sw.marketing.dao.calendar.DAOFactory;
 import org.sw.marketing.dao.calendar.category.CalendarCategoryDAO;
 import org.sw.marketing.dao.calendar.event.CalendarEventDAO;
+import org.sw.marketing.dao.calendar.event.CalendarEventTagDAO;
 import org.sw.marketing.data.calendar.Data;
 import org.sw.marketing.data.calendar.Data.Calendar;
+import org.sw.marketing.data.calendar.Data.Environment;
 import org.sw.marketing.data.calendar.Data.Calendar.Category;
 import org.sw.marketing.data.calendar.Data.Calendar.Event;
+import org.sw.marketing.data.calendar.Data.Calendar.Event.Tag;
 import org.sw.marketing.data.calendar.Data.Calendar.Search;
 import org.sw.marketing.transformation.TransformerHelper;
 import org.sw.marketing.util.ReadFile;
@@ -30,6 +34,7 @@ public class CalendarSearchServlet extends HttpServlet {
 		CalendarDAO calendarDAO = DAOFactory.getCalendarDAO();
 		CalendarEventDAO eventDAO = DAOFactory.getCalendarEventDAO();
 		CalendarCategoryDAO categoryDAO = DAOFactory.getCalendarCategoryDAO();
+		CalendarEventTagDAO tagsDAO = DAOFactory.getCalendarEventTagDAO();
 		
 		boolean prettyUrl = false;
 		long calendarID = 0;
@@ -59,6 +64,7 @@ public class CalendarSearchServlet extends HttpServlet {
 		if(calendar != null)
 		{				
 			Search search = new Search();
+			search.setFkCalendarId(calendarID);
 			String paramSearchType = request.getParameter("searchType");
 			if(paramSearchType == null)
 			{
@@ -79,12 +85,37 @@ public class CalendarSearchServlet extends HttpServlet {
 			{
 				String paramCategoryId = request.getParameter("categoryId");
 				long categoryID = Long.parseLong(paramCategoryId);
-				events = eventDAO.getCalendarEventsByCategory(categoryID);
+				search.setCategoryId(categoryID);
+				
+				events = eventDAO.getCalendarEventsByCategory(search);
 				if(events != null)
 				{
 					calendar.getEvent().addAll(events);
 				}
-				search.setCategoryId(categoryID);
+			}
+			if(paramSearchType.equals("tag"))
+			{
+				String paramTagId = request.getParameter("tagId");
+				String paramTagName = request.getParameter("tagName");
+				long tagId = Long.parseLong(paramTagId);
+				search.setTagId(tagId);
+			
+				eventIDs = eventDAO.getMatchedEventsForTag(search);
+				if(eventIDs != null)
+				{
+					java.util.Iterator<Long> eventIdIt = eventIDs.iterator();
+					while(eventIdIt.hasNext())
+					{
+						long eventID = eventIdIt.next();
+						Event event = eventDAO.getCalendarEvent(eventID);
+						java.util.List<Tag> tags = tagsDAO.getTags(eventID);
+						if(tags != null)
+						{
+							event.getTag().addAll(tags);
+						}
+						calendar.getEvent().add(event);
+					}
+				}
 			}
 			else
 			{
@@ -111,6 +142,10 @@ public class CalendarSearchServlet extends HttpServlet {
 			}
 			
 			data.getCalendar().add(calendar);
+			
+			Environment environment = new Environment();
+			environment.setScreenName("SEARCH");			
+			data.setEnvironment(environment);
 			
 			/*
 			 * generate output
@@ -139,6 +174,13 @@ public class CalendarSearchServlet extends HttpServlet {
 
 			skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
 			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+			
+			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
+			String skinCss = calendar.getSkinCssOverrides();
+			styleElement.text(skinCss);
+			String styleElementStr = styleElement.toString();
+			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
 			
 			System.out.println(xmlStr);
 			response.getWriter().println(skinHtmlStr);
