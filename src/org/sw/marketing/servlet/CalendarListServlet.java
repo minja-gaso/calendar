@@ -19,7 +19,7 @@ import org.sw.marketing.dao.calendar.event.CalendarEventDAO;
 import org.sw.marketing.data.calendar.Data;
 import org.sw.marketing.data.calendar.Data.Calendar;
 import org.sw.marketing.data.calendar.Data.Calendar.Event;
-import org.sw.marketing.data.calendar.Data.Environment;
+import org.sw.marketing.data.calendar.Environment;
 import org.sw.marketing.data.calendar.Data.Calendar.Category;
 import org.sw.marketing.data.calendar.Data.Calendar.CurrentView;
 import org.sw.marketing.transformation.TransformerHelper;
