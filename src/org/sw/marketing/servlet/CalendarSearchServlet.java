@@ -14,9 +14,11 @@ import org.sw.marketing.dao.calendar.DAOFactory;
 import org.sw.marketing.dao.calendar.category.CalendarCategoryDAO;
 import org.sw.marketing.dao.calendar.event.CalendarEventDAO;
 import org.sw.marketing.dao.calendar.event.CalendarEventTagDAO;
+import org.sw.marketing.dao.calendar.skin.CalendarSkinDAO;
 import org.sw.marketing.data.calendar.Data;
 import org.sw.marketing.data.calendar.Data.Calendar;
 import org.sw.marketing.data.calendar.Environment;
+import org.sw.marketing.data.calendar.Skin;
 import org.sw.marketing.data.calendar.Data.Calendar.Category;
 import org.sw.marketing.data.calendar.Data.Calendar.Event;
 import org.sw.marketing.data.calendar.Data.Calendar.Event.Tag;
@@ -159,28 +161,49 @@ public class CalendarSearchServlet extends HttpServlet {
 			
 			String toolboxSkinPath = getServletContext().getInitParameter("assetPath") + "toolbox_1col.html";
 			String skinHtmlStr = null;
-
-			String skinUrl = calendar.getSkinUrl();
-			String skinCssSelector = calendar.getSkinSelector();
-
-			if (skinUrl.length() > 0 && skinCssSelector.length() > 0)
+			
+			CalendarSkinDAO skinDAO = DAOFactory.getCalendarSkinDAO();
+			String paramSkinID = request.getParameter("skinID");
+			long skinID = calendar.getFkSkinId();
+			if(paramSkinID != null)
 			{
-				skinHtmlStr = SkinReader.getSkinByUrl(calendar.getSkinUrl(), calendar.getSkinSelector());
+				try
+				{
+					skinID = Long.parseLong(paramSkinID);
+				}
+				catch(NumberFormatException e)
+				{
+					//
+				}
+			}
+			
+			
+			Skin skin = null;
+			if(skinID > 0)
+			{
+				skin = skinDAO.getSkin(skinID);
+			}
+			
+			if(skin != null)
+			{
+				skinHtmlStr = skin.getSkinHtml();
 			}
 			else
 			{
 				skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
 			}
-
 			skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
 			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 			
-			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
-			String skinCss = calendar.getSkinCssOverrides();
-			styleElement.text(skinCss);
-			String styleElementStr = styleElement.toString();
-			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
-			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+			if(skin != null)
+			{
+				Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
+				String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
+				styleElement.text(skinCss);
+				String styleElementStr = styleElement.toString();
+				styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+				skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);			
+			}
 			
 			System.out.println(xmlStr);
 			response.getWriter().println(skinHtmlStr);
