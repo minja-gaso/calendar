@@ -154,12 +154,15 @@ public class CalendarDetailServlet extends HttpServlet
 		skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
 		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 		
-		Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
-		String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
-		styleElement.text(skinCss);
-		String styleElementStr = styleElement.toString();
-		styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
-		skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+		if(skin != null)
+		{
+			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
+			String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
+			styleElement.text(skinCss);
+			String styleElementStr = styleElement.toString();
+			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+		}
 		
 		System.out.println(xmlStr);
 		response.setCharacterEncoding("utf-8");
