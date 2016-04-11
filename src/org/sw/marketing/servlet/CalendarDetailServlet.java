@@ -128,6 +128,8 @@ public class CalendarDetailServlet extends HttpServlet
 		
 		CalendarSkinDAO skinDAO = DAOFactory.getCalendarSkinDAO();
 
+		System.out.println(xmlStr);
+		response.setCharacterEncoding("utf-8");
 		
 		String paramSkinID = request.getParameter("skinID");
 		long skinID = calendar.getFkSkinId();
@@ -146,27 +148,22 @@ public class CalendarDetailServlet extends HttpServlet
 		if(skin != null)
 		{
 			skinHtmlStr = skin.getSkinHtml();
-		}
-		else
-		{
-			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
-		}
-		skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
-		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
-		
-		if(skin != null)
-		{
+			skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
+			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+
 			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
 			String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
 			styleElement.text(skinCss);
 			String styleElementStr = styleElement.toString();
 			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
 			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);
+			
+			response.getWriter().println(skinHtmlStr);
 		}
-		
-		System.out.println(xmlStr);
-		response.setCharacterEncoding("utf-8");
-		response.getWriter().println(skinHtmlStr);
+		else
+		{
+			response.getWriter().println(htmlStr);
+		}
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException

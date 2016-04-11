@@ -112,9 +112,9 @@ public class CalendarWidgetServlet extends HttpServlet
 		htmlStr = htmlStr.replaceAll("\"", "\\\"");
 		
 		System.out.println(xmlStr);
+		response.setContentType("text/html");
 		response.setCharacterEncoding("utf-8");
 		System.out.println(htmlStr);
-		response.getWriter().println(htmlStr + "...\"");
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException

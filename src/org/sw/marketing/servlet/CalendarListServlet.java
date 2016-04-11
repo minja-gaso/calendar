@@ -136,48 +136,30 @@ public class CalendarListServlet extends HttpServlet
 			skin = skinDAO.getSkin(skinID);
 		}
 		
-		if(skin != null)
-		{
-			skinHtmlStr = skin.getSkinHtml();
-		}
-		else
-		{
-			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
-		}
-		skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
-		skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
 
-//		String skinUrl = calendar.getSkinUrl();
-//		String skinCssSelector = calendar.getSkinSelector();
-//
-//		if (skinUrl.length() > 0 && skinCssSelector.length() > 0)
-//		{
-//			skinHtmlStr = SkinReader.getSkinByUrl(calendar.getSkinUrl(), calendar.getSkinSelector());
-//		}
-//		else
-//		{
-//			skinHtmlStr = ReadFile.getSkin(toolboxSkinPath);
-//		}
-
+		System.out.println(xmlStr);
+		response.setContentType("text/html");
+		response.setCharacterEncoding("utf-8");
 		
 		if(skin != null)
 		{
+			skinHtmlStr = skin.getSkinHtml();
+			skinHtmlStr = skinHtmlStr.replace("{TITLE}", calendar.getTitle());
+			skinHtmlStr = skinHtmlStr.replace("{CONTENT}", htmlStr);
+			
 			Element styleElement = new Element(org.jsoup.parser.Tag.valueOf("style"), "");
 			String skinCss = skin.getSkinCssOverrides() + skin.getCalendarCss();
 			styleElement.text(skinCss);
 			String styleElementStr = styleElement.toString();
 			styleElementStr = styleElementStr.replaceAll("&gt;", ">").replaceAll("&lt;", "<");
-			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);			
+			skinHtmlStr = skinHtmlStr.replace("{CSS}", styleElementStr);	
+			
+			response.getWriter().println(skinHtmlStr);
 		}
-		
-		System.out.println(xmlStr);
-		response.setCharacterEncoding("utf-8");
-		response.getWriter().println(skinHtmlStr);
-//		response.getWriter().println(htmlStr);
-		
-//		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-//		String json = gson.toJson(data);
-//		System.out.println(json);
+		else
+		{
+			response.getWriter().println(htmlStr);
+		}
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
